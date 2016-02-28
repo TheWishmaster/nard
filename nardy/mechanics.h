@@ -210,14 +210,19 @@ public:
 	bool IsFirstMove(int color) const{
 		return last_cell_[color] == 0;
 	}
+	bool IsCellOccupied(int number) const{
+		return cells_[number].is_occupied;
+	}
 };
 
 bool StrangeFirstMove(const Field &this_field, bool my_color, int dice){
 	if (dice != 6 && dice != 4 && dice != 3)
 		return 0;
-	if (this_field.IsFirstMove(my_color))
-		return 1;
-	return 0;
+	if (!this_field.IsFirstMove(my_color))
+		return 0;
+	if (dice == 4 && this_field.IsCellOccupied(8))
+		return 0;
+	return 1;
 }
 
 void GeneratePossibleMoves(Field &this_field, bool my_color, static std::vector <int> &single_moves, 
@@ -237,44 +242,34 @@ void GeneratePossibleMoves(Field &this_field, bool my_color, static std::vector 
 }
 
 std::vector <TMove> GetGoodMoves(Field &this_field, bool my_color, const std::pair<int, int>& dice){
-	if (dice.first == dice.second){
-		std::vector<TMove> possible_moves, good_moves;
-		TMove buffer;
-		std::vector <int> single_moves = { dice.first, dice.first, dice.first, dice.first };
-		GeneratePossibleMoves(this_field, my_color, single_moves, 4, 1 + int(StrangeFirstMove(this_field, my_color, dice.first)), buffer, possible_moves);
-		if (possible_moves.size() == 0)
-			return good_moves;
-		int max_way = possible_moves[0].size();
-		for (int i = 1; i < possible_moves.size(); ++i)
-			max_way = max(max_way, possible_moves[i].size());
+	std::vector<TMove> possible_moves, good_moves;
+	TMove buffer;
+	std::vector <int> single_moves;
+	if (dice.first == dice.second)
+		single_moves = { dice.first, dice.first, dice.first, dice.first };
+	else
+		single_moves = { dice.first, dice.second };
+	if (single_moves.size() == 4 && StrangeFirstMove(this_field, my_color, dice.first))
+		GeneratePossibleMoves(this_field, my_color, single_moves, single_moves.size(), 2, buffer, possible_moves);
+	else
+		GeneratePossibleMoves(this_field, my_color, single_moves, single_moves.size(), 1, buffer, possible_moves);
+	if (single_moves.size() == 2){
+		std::swap(single_moves[0], single_moves[1]);
+		GeneratePossibleMoves(this_field, my_color, single_moves, single_moves.size(), 1, buffer, possible_moves);
+	}
+	if (possible_moves.size() == 0)
+		return good_moves;
+	int max_way = possible_moves[0].size(), first_move_length = 0;
+	for (int i = 1; i < possible_moves.size(); ++i)
+		max_way = max(max_way, possible_moves[i].size());
+	if (max_way == 0)
 		for (int i = 0; i < possible_moves.size(); ++i)
 			if (max_way == possible_moves[i].size())
-				good_moves.push_back(possible_moves[i]);
-		return good_moves;
-	}
-	else{
-		std::vector<TMove> possible_moves, good_moves;
-		TMove buffer;
-		std::vector <int> single_moves = { dice.first, dice.second };
-		GeneratePossibleMoves(this_field, my_color, single_moves, 2, 1, buffer, possible_moves);
-		single_moves = { dice.second, dice.first };
-		GeneratePossibleMoves(this_field, my_color, single_moves, 2, 1, buffer, possible_moves);
-		if (possible_moves.size() == 0)
-			return good_moves;
-		for (int i = 0; i < possible_moves.size(); ++i)
-			if (possible_moves[i].size() == 2){
-				good_moves.push_back(possible_moves[i]);
-			}
-		if (good_moves.size() > 0)
-			return good_moves;
-		int max_way = possible_moves[0][0].second - possible_moves[0][0].first;
-		for (int i = 1; i < possible_moves.size(); ++i)
-			max_way = max(max_way, possible_moves[i][0].second - possible_moves[i][0].first);
-		for (int i = 0; i < possible_moves.size(); ++i)
-			if (max_way == (possible_moves[i][0].second - possible_moves[i][0].first))
-				good_moves.push_back(possible_moves[i]);
-		return good_moves;
-	}
+				first_move_length = max(first_move_length, possible_moves[i][0].second - possible_moves[i][0].first);
+	for (int i = 0; i < possible_moves.size(); ++i)
+		if (max_way == possible_moves[i].size() && possible_moves[i][0].second - possible_moves[i][0].first >= first_move_length)
+			good_moves.push_back(possible_moves[i]);
+	return good_moves;
 }
 
 class Strategy : public IStrategy{
