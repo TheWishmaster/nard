@@ -25,7 +25,13 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mechanics.h">
+    <ClInclude Include="field.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="strategies.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="judge.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
   </ItemGroup>
