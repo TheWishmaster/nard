@@ -84,7 +84,7 @@ public:
 	}
 	TMove Move(const std::pair<int, int>& dice){
 		std::vector <TMove> good_moves = GetGoodMoves(this_field_, my_color_, dice);
-		TMove chosen_move = chosen_strategy_->Move(good_moves, GetState());
+		TMove chosen_move = chosen_strategy_->Move(good_moves);
 		for (int i = 0; i < chosen_move.size(); ++i){
 			this_field_.MoveOneChip(chosen_move[i].first, chosen_move[i].second, my_color_);
 			chosen_move[i].first = this_field_.Convert(chosen_move[i].first, my_color_);
@@ -103,11 +103,12 @@ private:
 	Player first_player_, second_player_;
 	int game_length_, first_player_color_;
 public:
-	Judge(int first_player_color, int first_player_strategy = 0, int second_player_strategy = 0) :
-		first_player_(first_player_color, first_player_strategy),
-		second_player_(!first_player_color, second_player_strategy),
+	Judge(int first_player_color) :
+		first_player_(first_player_color, 0),
+		second_player_(!first_player_color, 0),
 		first_player_color_(first_player_color),
-		game_length_(0){}
+		game_length_(0){
+	}
 	bool Move(){
 		if (game_length_ % 2 == 0){
 			second_player_.UpdateState(first_player_.Move({rand() % 6 + 1, rand() % 6 + 1}));
@@ -127,26 +128,4 @@ public:
 			return first_player_.GetState();
 		return second_player_.GetState();
 	}
-	bool WhoWon(){
-		if (first_player_.IWin())
-			return 0;
-		return 1;
-	}
 };
-
-double RunGames(int games_number, int second_player_strategy = 0, int first_player_strategy = 0){
-	int first_player_wins = 0;
-	for (int i = 0; i < games_number / 2; ++i){
-		Judge current_game(0, first_player_strategy, second_player_strategy);
-		while (!current_game.Move()){
-			first_player_wins += current_game.WhoWon() == 0;
-		}
-	}
-	for (int i = games_number / 2; i < games_number; ++i){
-		Judge current_game(1, first_player_strategy, second_player_strategy);
-		while (!current_game.Move()){
-			first_player_wins += current_game.WhoWon() == 0;
-		}
-	}
-	return 1. * first_player_wins / games_number;
-}
