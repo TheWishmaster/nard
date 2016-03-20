@@ -70,10 +70,24 @@ private:
 	}
 
 public:
-	Player(bool color, int strategy_type): this_field_(color){
+	Player(bool color, int strategy_type) : this_field_(color){
 		my_color_ = color;
 		if (strategy_type == 0)
 			chosen_strategy_ = new RandomStrategy;
+		if (strategy_type == 1)
+			chosen_strategy_ = new FirstStrategy;
+	}
+	Player(bool color, int strategy_type, std::vector <int> &init_field) : this_field_(0){
+		if (color){
+			for (int i = 0; i < init_field.size(); ++i)
+				init_field[i] = -init_field[i];
+			reverse(init_field.begin(), init_field.end());
+		}
+		my_color_ = color;
+		if (strategy_type == 0)
+			chosen_strategy_ = new RandomStrategy;
+		if (strategy_type == 1)
+			chosen_strategy_ = new FirstStrategy;
 	}
 	std::vector <int> GetState(){
 		return this_field_.GetField();
@@ -84,7 +98,7 @@ public:
 	}
 	TMove Move(const std::pair<int, int>& dice){
 		std::vector <TMove> good_moves = GetGoodMoves(this_field_, my_color_, dice);
-		TMove chosen_move = chosen_strategy_->Move(good_moves, GetState());
+		TMove chosen_move = chosen_strategy_->Move(good_moves, this_field_.GetField(my_color_));
 		for (int i = 0; i < chosen_move.size(); ++i){
 			this_field_.MoveOneChip(chosen_move[i].first, chosen_move[i].second, my_color_);
 			chosen_move[i].first = this_field_.Convert(chosen_move[i].first, my_color_);
@@ -103,11 +117,11 @@ private:
 	Player first_player_, second_player_;
 	int game_length_, first_player_color_;
 public:
-	
+
 	Judge(int first_player_color, int first_player_strategy = 0, int second_player_strategy = 0) :
 		first_player_(first_player_color, first_player_strategy),
 		second_player_(!first_player_color, second_player_strategy),
-		game_length_(0){	}
+		game_length_(0){}
 	bool Move(){
 		if (game_length_ % 2 == 0){
 			second_player_.UpdateState(first_player_.Move({rand() % 6 + 1, rand() % 6 + 1}));
@@ -135,19 +149,19 @@ public:
 
 };
 
-double RunGames(int games_number, int second_player_strategy = 0, int first_player_strategy = 0){
+double RunGames(int white_games_number, int black_games_number, int second_strategy = 0, int first_strategy = 0, std::vector <int> state = {}){
 	int first_player_wins = 0;
-	for (int i = 0; i < games_number / 2; ++i){
-		Judge current_game(0, first_player_strategy, second_player_strategy);
+	for (int i = 0; i < white_games_number; ++i){
+		Judge current_game(0, first_strategy, second_strategy);
 		while (!current_game.Move()){
-			first_player_wins += current_game.WhoWon() == 0;
 		}
+		first_player_wins += current_game.WhoWon() == 0;
 	}
-	for (int i = games_number / 2; i < games_number; ++i){
-		Judge current_game(1, first_player_strategy, second_player_strategy);
+	for (int i = 0; i < black_games_number; ++i){
+		Judge current_game(1, first_strategy, second_strategy);
 		while (!current_game.Move()){
-			first_player_wins += current_game.WhoWon() == 0;
 		}
+		first_player_wins += current_game.WhoWon() == 0;
 	}
-	return 1. * first_player_wins / games_number;
+	return 1. * first_player_wins / (white_games_number + black_games_number);
 }

@@ -185,11 +185,11 @@ public:
 			cells_[starting_cell].is_occupied = false;
 		}
 	}
-	std::vector <int> GetField(){
+	std::vector <int> GetField(bool reverse_color = 0){
 		std::vector <int> outcome;
 		for (int i = 0; i < kFieldSize; ++i)
 			if (cells_[i].is_occupied)
-				if (cells_[i].color == 0)
+				if (cells_[i].color == reverse_color)
 					outcome.push_back(cells_[i].number);
 				else
 					outcome.push_back(-cells_[i].number);
