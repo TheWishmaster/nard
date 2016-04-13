@@ -88,6 +88,7 @@ public:
 	}
 	Field(std::vector <int> state, bool my_color){
 		out_of_border_[0] = out_of_border_[1] = kChipsOverall;
+		cells_.resize(kFieldSize);
 		for (int i = 0; i < state.size(); ++i){
 			if (state[i] == 0)
 				cells_[i].is_occupied = false;
@@ -95,15 +96,15 @@ public:
 				cells_[i].is_occupied = true;
 				cells_[i].number = abs(state[i]);
 				if (state[i] < 0)
-					cells_[i].color = 1;
+					cells_[i].color = !my_color;
 				else
-					cells_[i].color = 0;
+					cells_[i].color = my_color;
 			}
 		}
 		last_cell_[0] = last_cell_[1] = 0;
 		for (int i = 0; i < state.size(); ++i) if (cells_[i].is_occupied){
 			out_of_border_[cells_[i].color] -= cells_[i].number;
-			last_cell_[cells_[i].color] = max(last_cell_[cells_[i].color], Convert(i, my_color != cells_[i].color));
+			last_cell_[cells_[i].color] = std::max(last_cell_[cells_[i].color], Convert(i, my_color != cells_[i].color));
 		}
 		if (out_of_border_[0] > 0){
 			last_cell_[0] = kFieldSize;
@@ -178,7 +179,10 @@ public:
 			if (cells_[ending_cell].is_occupied == false){
 				cells_[ending_cell].is_occupied = true;
 				cells_[ending_cell].color = color;
-				last_cell_[color] = max(last_cell_[color], Convert(ending_cell));
+				last_cell_[color] = std::max(last_cell_[color], Convert(ending_cell));
+			}
+			else if (cells_[ending_cell].color != color){
+				std::cout << "oops\n";
 			}
 		}
 		if (cells_[starting_cell].number == 0){

@@ -1,6 +1,9 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <tchar.h>
 #include <vector>
+#include <iostream>
+#include <string>
 #include "judge.h"
 #include <SFML/Graphics.hpp>
 
@@ -23,6 +26,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
 	bool a = 0;
 	int moves = 0;
 	srand(13213);
+	//freopen("out.txt", "w", stdout);
+	//std::cout << RunGames(100, 100, 1) << std::endl;
 	while (main_window.isOpen()){
 		sf::Event Event;
 		while (main_window.pollEvent(Event)){
@@ -62,6 +67,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
 		main_window.clear(sf::Color(205, 170, 135));
 		for (int j = 0; j < shapes_to_display.size(); ++j)
 			main_window.draw(shapes_to_display[j]);
+		//sf::Text(std::string(RunGames(100, 100)), sf::Font();
 		main_window.display();
 	}
 	return 0;
