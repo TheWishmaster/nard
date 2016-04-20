@@ -8,6 +8,16 @@ typedef std::vector<std::pair<int, int> > TMove;
 
 const int kFieldSize = 24, kChipsOverall = 15;
 
+void ConvertState(std::vector <int> &state){
+	if (state.size() == 0)
+		return;
+	reverse(state.begin(), state.end());
+	reverse(state.begin(), state.begin() + kFieldSize);
+	reverse(state.begin() + kFieldSize, state.end());
+	for (int i = 0; i < kFieldSize; ++i)
+		state[i] *= -1;
+}
+
 struct Cell{
 	bool is_occupied, color;
 	int number;
@@ -104,7 +114,7 @@ public:
 		last_cell_[0] = last_cell_[1] = 0;
 		for (int i = 0; i < state.size(); ++i) if (cells_[i].is_occupied){
 			out_of_border_[cells_[i].color] -= cells_[i].number;
-			last_cell_[cells_[i].color] = std::max(last_cell_[cells_[i].color], Convert(i, my_color != cells_[i].color));
+			last_cell_[cells_[i].color] = max(last_cell_[cells_[i].color], Convert(i, my_color != cells_[i].color));
 		}
 		if (out_of_border_[0] > 0){
 			last_cell_[0] = kFieldSize;
@@ -179,7 +189,7 @@ public:
 			if (cells_[ending_cell].is_occupied == false){
 				cells_[ending_cell].is_occupied = true;
 				cells_[ending_cell].color = color;
-				last_cell_[color] = std::max(last_cell_[color], Convert(ending_cell));
+				last_cell_[color] = max(last_cell_[color], Convert(ending_cell));
 			}
 			else if (cells_[ending_cell].color != color){
 				std::cout << "oops\n";

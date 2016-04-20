@@ -61,11 +61,11 @@ public:
 			return good_moves;
 		int max_way = possible_moves[0].size(), first_move_length = 0;
 		for (int i = 1; i < possible_moves.size(); ++i)
-			max_way = std::max(max_way, (int)possible_moves[i].size());
-		if (max_way == 0)
+			max_way = max(max_way, (int)possible_moves[i].size());
+		if (max_way == 1)
 			for (int i = 0; i < possible_moves.size(); ++i)
 				if (max_way == possible_moves[i].size())
-					first_move_length = std::max(first_move_length, possible_moves[i][0].second - possible_moves[i][0].first);
+					first_move_length = max(first_move_length, possible_moves[i][0].second - possible_moves[i][0].first);
 		for (int i = 0; i < possible_moves.size(); ++i)
 			if (max_way == possible_moves[i].size() && possible_moves[i][0].second - possible_moves[i][0].first >= first_move_length)
 				good_moves.push_back(possible_moves[i]);
@@ -80,11 +80,13 @@ public:
 		if (strategy_type == 2)
 			chosen_strategy_ = new ManyFactorsStrategy;
 	}
-	Player(bool color, int strategy_type, std::vector <int> &init_field) : this_field_(color){
-		if (color){
+	Player(bool color, int strategy_type, std::vector <int> init_field) : this_field_(color){
+		if (color && init_field.size() > 0){
 			for (int i = 0; i < init_field.size(); ++i)
 				init_field[i] = -init_field[i];
 			reverse(init_field.begin(), init_field.end());
+			reverse(init_field.begin(), init_field.begin() + kFieldSize / 2);
+			reverse(init_field.begin() + kFieldSize / 2, init_field.end());
 		}
 		if (init_field.size() > 0)
 			this_field_ = Field(init_field, color);
@@ -105,7 +107,7 @@ public:
 	}
 	TMove Move(const std::pair<int, int>& dice){
 		std::vector <TMove> good_moves = GetGoodMoves(my_color_, dice);
-		TMove chosen_move = chosen_strategy_->Move(good_moves, this_field_.GetField(my_color_));
+		TMove chosen_move = chosen_strategy_->Move(this_field_.GetField(my_color_), good_moves);
 		for (int i = 0; i < chosen_move.size(); ++i){
 			this_field_.MoveOneChip(chosen_move[i].first, chosen_move[i].second, my_color_);
 			chosen_move[i].first = this_field_.Convert(chosen_move[i].first, my_color_);
@@ -150,8 +152,8 @@ public:
 	}
 	bool WhoWon(){
 		if (first_player_.IWin())
-			return 0;
-		return 1;
+			return first_player_color_;
+		return !first_player_color_;
 	}
 	bool Compare(){
 		std::vector <int> first_view = first_player_.GetState();
@@ -168,38 +170,38 @@ public:
 
 std::vector <std::pair <std::vector <int>, double> > logs;
 
-double RunGames(int white_games_number, int black_games_number, int second_strategy = 0, int first_strategy = 0, std::vector <int> state = {}, bool grade = false){
-	int first_player_wins = 0;
+double RunGames(int games, int second_strategy = 0, int first_strategy = 0, std::vector <int> state = {}, bool grade = false){
+	int white_player_wins = 0;
 	ManyFactorsStrategy grade_strategy;
-	for (int i = 0; i < white_games_number; ++i){
+	for (int i = 0; i < games; ++i){
 		Judge current_game(0, first_strategy, second_strategy, state);
 		while (!current_game.Move()){
 			if (current_game.Compare()){
 				std::cout << "problems\n";
 			}
-			if (grade && logs.size() < 10000 && rand() % 10 == 0){
-				logs.push_back({ grade_strategy.GradeState(current_game.GetState()), RunGames(50, 50) });
-				std::cout << "    " << logs.size() << '\n';
+			if (grade && logs.size() < 10000 && rand() % 12 == 0){
+				logs.push_back({ grade_strategy.GradeStates(current_game.GetState()), RunGames(200, 0, 0, current_game.GetState()) });
+				std::cout << "    " << logs.size() << ' ' << logs[logs.size() - 1].second << '\n';
 			}
 		}
-		first_player_wins += current_game.WhoWon() == 0;
-		//if (grade)
-		std::cout << i + 1 << ' ' << first_player_wins << '\n';
+		white_player_wins += current_game.WhoWon() == 0;
+		if (grade)
+			std::cout << i + 1 << ' ' << white_player_wins << '\n';
 	}
-	for (int i = 0; i < black_games_number; ++i){
-		Judge current_game(1, first_strategy, second_strategy, state);
-		while (!current_game.Move()){
-			if (current_game.Compare()){
-				std::cout << "problems\n";
-			}
-			if (grade && logs.size() < 10000 && rand() % 10 == 0){
-				logs.push_back({ grade_strategy.GradeState(current_game.GetState()), RunGames(50, 50) });
-				std::cout << "    " << logs.size() << '\n';
-			}
-		}
-		first_player_wins += current_game.WhoWon() == 0;
-		//if (grade)
-		std::cout << white_games_number + i + 1 << ' ' << first_player_wins << '\n';
+	/*for (int i = 0; i < black_games_number; ++i){
+	Judge current_game(1, first_strategy, second_strategy, state);
+	while (!current_game.Move()){
+	if (current_game.Compare()){
+	std::cout << "problems\n";
 	}
-	return 1. * first_player_wins / (white_games_number + black_games_number);
+	if (grade && logs.size() < 10000 && rand() % 12 == 0){
+	logs.push_back({ grade_strategy.GradeState(current_game.GetState()), RunGames(100, 0, 0, 0, current_game.GetState()) });
+	std::cout << "    " << logs.size() << '\n';
+	}
+	}
+	white_player_wins += current_game.WhoWon() == 0;
+	if (grade)
+	std::cout << white_games_number + i + 1 << ' ' << white_player_wins << '\n';
+	}*/
+	return 1. * white_player_wins / games;
 }

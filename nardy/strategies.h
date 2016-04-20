@@ -13,8 +13,7 @@ class IStrategy{
 public:
 
 	virtual ~IStrategy(){};
-	virtual TMove Move(std::vector <TMove> possible_moves, std::vector <int> &current_state) = 0;
-	//virtual void UpdateState(const TMove& enemyMove) = 0;
+	virtual TMove Move(const std::vector<int>& board, const std::vector <TMove> &possible_moves) = 0;
 
 };
 
@@ -25,11 +24,12 @@ protected:
 
 public:
 	virtual std::vector <int> GradeState(std::vector <int> &state) = 0;
-	TMove Move(std::vector <TMove> possible_moves, std::vector <int> &current_state){
+	TMove Move(const std::vector<int>& board, const std::vector <TMove> &possible_moves){
 		if (possible_moves.size() == 0)
 			return{};
 		double maximum_quality = 0, best_move = 0, temp;
 		std::vector <int> factors_temp;
+		std::vector <int> current_state = board;
 		for (int i = 0; i < possible_moves.size(); ++i){
 			for (int j = 0; j < possible_moves[i].size(); ++j){
 				current_state[possible_moves[i][j].first]--;
@@ -55,6 +55,14 @@ public:
 		return possible_moves[best_move];
 	};
 
+	std::vector <int> GradeStates(std::vector <int> &state){
+		std::vector <int> result = GradeState(state), temp;
+		ConvertState(state);
+		temp = GradeState(state);
+		result.insert(result.end(), temp.begin(), temp.end());
+		return result;
+	}
+
 };
 
 class FirstStrategy : public CostsStrategy{
@@ -64,7 +72,7 @@ private:
 
 public:
 	FirstStrategy(){
-		costs = { 10, 100, 100, 1, 50 };
+		costs = { 0.06251882, -0.00723875, 0.05243943, -0.00972646, 0.00464151 };
 	}
 	std::vector <int> GradeState(std::vector <int> &state){
 		std::vector <int> choises;
@@ -73,7 +81,7 @@ public:
 			int current_row = 0;
 			while (i + current_row < kFieldSize && state[i + current_row] == 0)
 				++current_row;
-			max_in_a_row = std::max(max_in_a_row, current_row);
+			max_in_a_row = max(max_in_a_row, current_row);
 		}
 		choises.push_back(max_in_a_row);
 		choises.push_back(max_in_a_row * max_in_a_row);
@@ -103,31 +111,40 @@ private:
 
 public:
 	ManyFactorsStrategy(){
-		costs = { 1.21074987e-03, -1.16501357e-04, 1.78279961e-06,
-			-3.60646616e-05, -7.43443597e-05, 1.53099455e-05,
-			-3.50874712e-05, 1.18537311e-04, -5.93237222e-05,
-			1.94908402e-04, 5.48193574e-05, 1.35753795e-05,
-			1.15254154e-04, 4.08688853e-05, -6.37611702e-05,
-			-7.42003739e-04, -3.55182017e-05, 7.22608702e-05,
-			-4.37444329e-04, -2.76435635e-04, 1.67347809e-04,
-			-1.29910260e-03, 1.38234427e-04, -9.15234939e-07,
-			1.67957858e-03, 1.18802112e-03, -3.41230598e-04,
-			-8.02878713e-04, -8.99154300e-04, 1.59616060e-04,
-			3.25866745e-03, -2.50514052e-03, 2.17596064e-05,
-			3.89505436e-02, -5.79589394e-04, -2.38965725e-03,
-			-4.73859528e-04, 4.43005866e-05, -1.55974633e+12,
-			-8.95125924e-04, 1.86284640e-04, -2.95297731e-05,
-			7.52270553e-04, -1.62663239e-04, 3.08226616e-05,
-			4.74549051e-04, -3.83041502e-05, -4.67186177e-05,
-			1.39550869e-03, -5.78171180e-04, 1.21782870e-04,
-			-4.69406429e-04, -1.84907922e-05, 1.32037541e-04,
-			1.90288210e-03, 6.02391747e-04, -2.53085646e-04,
-			-4.17015871e-03, 3.11404873e-04, 1.69177269e-04,
-			-1.96054135e-03, 2.88590814e-04, 1.23574111e-04,
-			2.99013786e-03, 3.31546286e-04, -3.30856004e-04,
-			-5.50617084e-03, 1.53506153e-03, 2.16896715e-04,
-			4.90260139e+11, -4.90260139e+11, -4.49402678e-04,
-			0.00000000e+00, 0.00000000e+00, 4.39876268e-04 };
+		costs = { 6.19584686e+11, 1.72751439e-02, -6.61581864e+11,
+			4.82509285e-04, -3.58004871e+11, 7.02319150e-04,
+			-4.78570971e+11, -3.32518114e-03, 8.22063333e+10,
+			3.72369535e-03, -1.00570120e+11, -3.49210267e-03,
+			1.38084536e+10, -1.19044236e-03, 1.23465333e+11,
+			-4.98309398e-03, -9.86267361e+10, 5.54713305e-03,
+			3.06051868e+11, 4.67007078e-03, 3.74659279e+11,
+			-6.20537604e-03, 2.68015741e+11, 2.23722077e+11,
+			8.24051775e+10, -6.55262637e+12, 1.78283029e+11,
+			7.48355357e-04, 6.79259242e+10, -1.35554914e-04,
+			-3.34026493e+10, -1.26311134e-03, -1.27294000e+11,
+			2.23953997e-03, 1.28675746e+11, -3.18923828e-03,
+			4.63132341e+10, 1.91007134e-03, 2.44873086e+11,
+			3.29991876e-03, -2.80245540e+11, -1.16324634e-03,
+			-6.99015807e+10, 3.44414472e-03, 8.57279328e+11,
+			-2.56290850e-03, 7.88882010e+08, 3.07412008e-02,
+			-1.14017874e+12, -5.43335868e+12, 9.63742641e-02,
+			-6.19584686e+11, 3.59179808e-03, 6.61581864e+11,
+			4.10539089e-03, 3.58004871e+11, -5.75421298e-03,
+			4.78570971e+11, 8.52301125e-03, -8.22063333e+10,
+			-3.07020037e-03, 1.00570120e+11, -3.20587666e-03,
+			-1.38084536e+10, -1.03002903e-03, -1.23465333e+11,
+			-1.07184348e-03, 9.86267361e+10, -2.14389630e-02,
+			-3.06051868e+11, 5.36723637e-03, -3.74659279e+11,
+			2.69305581e-02, -3.62384690e+12, -3.10196070e-03,
+			-8.24051775e+10, 0.00000000e+00, -1.78283029e+11,
+			-1.42566212e-02, -6.79259242e+10, -1.81343743e-02,
+			3.34026493e+10, 7.15450593e-03, 1.27294000e+11,
+			1.58505693e-02, -1.28675746e+11, -2.44229602e-02,
+			-4.63132341e+10, -5.56827603e-03, -2.44873086e+11,
+			5.30668926e-03, 2.80245540e+11, -8.58392610e-03,
+			6.99015807e+10, 2.32585194e-04, -8.57279328e+11,
+			1.36402166e-02, -7.88882010e+08, 4.37961075e-02,
+			0.00000000e+00, 0.00000000e+00, -5.68452504e-02 };
 	}
 	std::vector <int> GradeState(std::vector <int> &state){
 		std::vector <int> choises;
@@ -150,12 +167,12 @@ public:
 			int current_row = 0;
 			while (i + current_row < kFieldSize && state[i + current_row] == 0)
 				++current_row;
-			choises.push_back(current_row);
-			choises.push_back(current_row * current_row);
-			choises.push_back(current_row * blocking_enemies[i]);
+			choises.push_back(current_row > 0);
+			//choises.push_back(current_row * current_row);
+			//choises.push_back(current_row * blocking_enemies[i]);
 		}
-		choises.push_back(max_in_a_row);
-		choises.push_back(max_in_a_row * max_in_a_row);
+		//choises.push_back(max_in_a_row);
+		//choises.push_back(max_in_a_row * max_in_a_row);
 		int all = 0;
 		for (int i = 0; i < kFieldSize; ++i) {
 			if (state[i] > 0){
@@ -168,7 +185,7 @@ public:
 };
 
 class RandomStrategy : public IStrategy{
-	virtual TMove Move(std::vector <TMove> possible_moves, std::vector <int> &current_state){
+	virtual TMove Move(const std::vector<int>& board, const std::vector <TMove> &possible_moves){
 		if (possible_moves.size() == 0)
 			return{};
 		return possible_moves[rand() % possible_moves.size()];
